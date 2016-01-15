@@ -1,0 +1,44 @@
+body {
+  padding: 2em;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1em;
+}
+
+textarea {
+  resize: none;
+  font-size: 1em;
+}
+
+#name {
+  font-size: 1em;
+}
+
+.inlineBlock {
+ display: inline-block;
+}
+
+.topAligned {
+ vertical-align: top;
+}
+
+#form{
+ color: #3F51B5;
+ width: 424px;
+ background-color: lavender;
+ margin-top:5px;
+ padding:5px;
+}
+
+#fHead{
+ display:flex;
+ padding-bottom:10px;
+}
+#fName{
+ width:50%;
+ font-weight:bold;
+}
+
+#fTimestamp{
+ text-align: right;
+ width:50%;
+}

@@ -1,0 +1,24 @@
+doctype html
+html
+  head
+    link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Open+Sans')
+    link(rel='stylesheet', href='/css/style.css')
+    script(src='//code.jquery.com/jquery-1.11.0.min.js')
+    script(src='/socket.io/socket.io.js')
+    script(src='/js/index.js') 
+    title FSE Chat Room
+  body
+    h2 FSE Chat Room
+    div
+      div.inlineBlock
+        span Your name:
+          input(type="text", value="me")#name
+        br
+        form#messageForm
+          textarea(rows="4", cols="50", maxlength=200)#outgoingMessage
+          input(type="button", value="POST", disabled=true)#send
+      div.inlineBlock.topAligned
+        b Participants
+        br
+        div#participants
+    div#messages
