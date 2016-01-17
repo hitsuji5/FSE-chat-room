@@ -10,10 +10,11 @@ html
   body
     h2 FSE Chat Room
     div
+      p
+      strong User Name : 
+      span#name #{username}
+    div
       div.inlineBlock
-        span Your name:
-          input(type="text", value="me")#name
-        br
         form#messageForm
           textarea(rows="4", cols="50", maxlength=200)#outgoingMessage
           input(type="button", value="POST", disabled=true)#send

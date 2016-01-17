@@ -1,15 +1,11 @@
 function init() {
-
+  var username = $('#name').text();
   var serverBaseUrl = document.domain;
-
   /* 
    On client init, try to connect to the socket.IO server.
-   Note we don't specify a port since we set up our server
-   to run on port 8080
   */
   var socket = io.connect(serverBaseUrl);
 
-  //We'll save our session ID in a variable for later
   var sessionId = '';
 
   //Helper function to update the participants' list
@@ -31,7 +27,7 @@ function init() {
   socket.on('connect', function () {
     sessionId = socket.io.engine.id;
     console.log('Connected ' + sessionId);
-    socket.emit('newUser', {id: sessionId, name: $('#name').val()});
+    socket.emit('newUser', {id: sessionId, name: username});
   });
 
   /*
@@ -49,14 +45,6 @@ function init() {
   */
   socket.on('userDisconnected', function(data) {
     $('#' + data.id).remove();
-  });
-
-  /*
- When the server fires the "nameChanged" event, it means we
- must update the span with the given ID accordingly
-  */
-  socket.on('nameChanged', function (data) {
-    $('#' + data.id).html(data.name + ' ' + (data.id === sessionId ? '(You)' : '') + '<br />');
   });
 
   /*
@@ -86,13 +74,12 @@ function init() {
   */
   function sendMessage() {
     var outgoingMessage = $('#outgoingMessage').val();
-    var name = $('#name').val();
     $.ajax({
       url:  '/message',
       type: 'POST',
       contentType: 'application/json',
       dataType: 'json',
-      data: JSON.stringify({message: outgoingMessage, name: name})
+      data: JSON.stringify({message: outgoingMessage, name: username})
     });
   }
 
@@ -119,19 +106,9 @@ function init() {
     $('#send').attr('disabled', (outgoingMessageValue.trim()).length > 0 ? false : true);
   }
 
-  /*
- When a user updates his/her name, let the server know by
- emitting the "nameChange" event
-  */
-  function nameFocusOut() {
-    var name = $('#name').val();
-    socket.emit('nameChange', {id: sessionId, name: name});
-  }
-
   /* Elements setup */
   $('#outgoingMessage').on('keydown', outgoingMessageKeyDown);
   $('#outgoingMessage').on('keyup', outgoingMessageKeyUp);
-  $('#name').on('focusout', nameFocusOut);
   $('#send').on('click', sendMessage);
 
 }

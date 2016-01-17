@@ -2,25 +2,21 @@
   Module dependencies:
 
   - Express
-  - Http (to run Express)
-  - Body parser (to parse JSON requests)
-  - Underscore (because it's cool)
+  - Http
+  - Body parser
+  - Underscore
   - Socket.IO
-
-  It is a common practice to name the variables after the module name.
-  Ex: http is the "http" module, express is the "express" module, etc.
-  The only exception is Underscore, where we use, conveniently, an 
-  underscore. Oh, and "socket.io" is simply called io. Seriously, the 
-  rest should be named after its module name.
+  - sqlite3
 
 */
-var express = require("express")
-  , app = express()
-  , http = require("http").createServer(app)
-  , bodyParser = require("body-parser")
-  , io = require("socket.io").listen(http)
-  , _ = require("underscore")
-  , sqlite3 = require('sqlite3').verbose();
+var express = require("express");
+var app = express();
+var http = require("http").createServer(app);
+var bodyParser = require("body-parser");
+var io = require("socket.io").listen(http);
+var _ = require("underscore");
+var sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database('db.sqlite3');
 
 /* 
   The list of participants in our chatroom.
@@ -31,68 +27,39 @@ var express = require("express")
   }
 */
 var participants = [];
-var db = new sqlite3.Database('db.sqlite3');
 
 /* Server config */
-
-//Server's IP address
-app.set("ipaddr", "127.0.0.1");
-
-//Server's port number 
-app.set("port", 8080);
-
-//Specify the views folder
+app.set("port", process.env.PORT || 3000);
 app.set("views", __dirname + "/views");
-
-//View engine is Jade
 app.set("view engine", "jade");
 
-//Specify where the static content is
+/* Middleware */
 app.use(express.static("public", __dirname + "/public"));
-
-//Tells server to support JSON requests
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 /* Server routing */
-
-//Handle route "GET /", as in "http://localhost:8080/"
 app.get("/", function(request, response) {
-
-  //Render the view called "index"
-  response.render("index");
-
+  response.render("login");
 });
 
-//POST method to create a chat message
+app.post("/", function(request, response) {
+  response.render("chat", {username: request.body.username});
+});
 
 app.post("/message", function(request, response) {
-
-  //The request body expects a param named "message"
   var message = request.body.message;
-
-  //If the message is empty or wasn't sent it's a bad request
   if(_.isUndefined(message) || _.isEmpty(message.trim())) {
     return response.json(400, {error: "Message is invalid"});
   }
 
-  //We also expect the sender's name with the message
   var name = request.body.name;
-
   var date = new Date(); 
-  var year = date.getFullYear();
-  var month = date.getMonth()+1;
-  var day = date.getDate();
-  var hour = date.getHours();
-  var minute = date.getMinutes();
-  var timestamp = month + "." + day + "." + year + " " + hour + ":" + minute;
+  var timestamp = date.toLocaleString();
 
-  //Let our chatroom know there was a new message
   io.sockets.emit("incomingMessage", {message: message, name: name, timestamp: timestamp});
+  db.run("INSERT INTO data VALUES (?, ?, ?)", name, timestamp, message);
 
-  db.serialize(function(){
-    db.run("INSERT INTO data VALUES (?, ?, ?)", name, timestamp, message);
-  });
-  //Looks good, let the client know
   response.json(200, {message: "Message received"});
 
 });
@@ -117,16 +84,6 @@ io.on("connection", function(socket){
     });
   });
 
-  /*
-    When a user changes his name, we are expecting an event called "nameChange" 
-    and then we'll emit an event called "nameChanged" to all participants with
-    the id and new name of the user who emitted the original message
-  */
-  socket.on("nameChange", function(data) {
-    _.findWhere(participants, {id: socket.id}).name = data.name;
-    io.sockets.emit("nameChanged", {id: data.id, name: data.name});
-  });
-
   /* 
     When a client disconnects from the server, the event "disconnect" is automatically 
     captured by the server. It will then emit an event called "userDisconnected" to 
@@ -139,7 +96,6 @@ io.on("connection", function(socket){
 
 });
 
-//Start the http server at port and IP defined before
-http.listen(app.get("port"), app.get("ipaddr"), function() {
-  console.log("Server up and running. Go to http://" + app.get("ipaddr") + ":" + app.get("port"));
+http.listen(app.get("port"), function() {
+  console.log("Server up and running. Go to http://localhost:" + app.get("port"));
 });
